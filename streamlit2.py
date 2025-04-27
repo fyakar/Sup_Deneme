@@ -1,9 +1,8 @@
 import pandas as pd
 import numpy as np
+from sklearn.metrics.pairwise import cosine_similarity
 import streamlit as st
 import matplotlib.pyplot as plt
-import plotly.express as px
-from sklearn.metrics.pairwise import cosine_similarity
 
 # Veriyi yükleme
 file_path = 'CHURN HESAPLAMA.xlsx'  # Excel dosyasının yolu
@@ -14,13 +13,13 @@ if 'Type' not in df.columns:
     if 'Segment' in df.columns:
         df['Type'] = df['Segment'].apply(lambda x: 'B2B' if x in ['Corporate', 'Home Office'] else 'B2C')
 
-# Gerekli kolonları seç
-df = df[['Customer_ID', 'Product_Name', 'Sales', 'Category', 'Order_Date', 'Type', 'City', 'State']]
+# Gerekli kolonları filtrele
+df = df[['Customer_ID', 'Product_Name', 'Sales', 'Category', 'Order_Date', 'Type']]
 
-# Tarih tipini dönüştür
+# Order_Date kolonunu datetime yap
 df['Order_Date'] = pd.to_datetime(df['Order_Date'])
 
-# Ürün isimleri ve kategorileri eşle
+# Ürün İsimleri ve Kategorileri Eşle
 product_category_map = df[['Product_Name', 'Category']].drop_duplicates().set_index('Product_Name')['Category'].to_dict()
 
 # Kullanıcı-Ürün Etkileşim Matrisi
@@ -163,24 +162,3 @@ elif tabs == 'Genel Satış Analizi':
     ax2.set_title('Kategori Bazında Satışlar')
     plt.tight_layout()
     st.pyplot(fig2)
-
-    st.subheader('🗺️ Şehirlere Göre Satışlar - ABD Haritası')
-
-    if 'City' in filtered_df.columns and 'State' in filtered_df.columns:
-        city_sales = filtered_df.groupby(['City', 'State']).agg({'Sales': 'sum'}).reset_index()
-        city_sales['City_State'] = city_sales['City'] + ', ' + city_sales['State']
-
-        fig_map = px.scatter_geo(
-            city_sales,
-            locations="City_State",
-            locationmode="USA-states",
-            color="Sales",
-            size="Sales",
-            hover_name="City_State",
-            scope="usa",
-            title="Şehirlere Göre Satış Yoğunluğu (ABD)"
-        )
-
-        st.plotly_chart(fig_map, use_container_width=True)
-    else:
-        st.warning("Şehir (City) veya Eyalet (State) bilgileri bulunamadı.")
