@@ -21,8 +21,8 @@ product_names = interaction_matrix.columns.tolist()
 # Ürün isimleri ve kategorileri eşleştir
 product_category_map = df[['Product_Name', 'Category']].drop_duplicates().set_index('Product_Name')['Category'].to_dict()
 
-# Tavsiye Fonksiyonu
-def item_based_recommendation(product_name, top_n=5):
+# Tavsiye Fonksiyonu (kategori filtresi dahil)
+def item_based_recommendation(product_name, selected_category=None, top_n=5):
     if product_name not in product_names:
         return [], [], []
     
@@ -32,16 +32,27 @@ def item_based_recommendation(product_name, top_n=5):
     # Ürünler arası benzerlikleri alıyoruz
     similarity_scores = cosine_sim[product_idx]
     
-    # En yüksek benzerlik skorlarına sahip N ürünü alıyoruz
+    # En yüksek benzerlik skorlarına sahip ürünlerin indekslerini alıyoruz
     recommended_product_idx = np.argsort(similarity_scores)[::-1]
     
     # Kendisi dahil edilmesin
     recommended_product_idx = recommended_product_idx[recommended_product_idx != product_idx]
     
-    # Tavsiye edilecek ürünler ve skorlar
-    top_recommendations = recommended_product_idx[:top_n]
-    recommended_products = [product_names[idx] for idx in top_recommendations]
-    recommendation_scores = similarity_scores[top_recommendations]
+    # Ürün adlarını ve skorları çekelim
+    recommended_products = [product_names[idx] for idx in recommended_product_idx]
+    recommendation_scores = similarity_scores[recommended_product_idx]
+    
+    # Eğer kategori filtresi seçilmişse, filtre uygula
+    if selected_category:
+        filtered = [(prod, score) for prod, score in zip(recommended_products, recommendation_scores) 
+                    if product_category_map.get(prod) == selected_category]
+        if not filtered:
+            return [], [], []
+        recommended_products, recommendation_scores = zip(*filtered)
+    
+    # İlk top_n ürün
+    recommended_products = list(recommended_products)[:top_n]
+    recommendation_scores = np.array(recommendation_scores)[:top_n]
     
     # Tavsiye oranı: (Benzerlik oranı / Maksimum benzerlik oranı) * 100
     max_similarity = recommendation_scores.max() if recommendation_scores.max() != 0 else 1
@@ -68,16 +79,27 @@ if tabs == 'Ürün Tavsiyesi':
     
     # Ürün listesini oluştur
     product_list = sorted(df['Product_Name'].unique().tolist())
-
+    
     # Ürün seçimi
     product_name_input = st.selectbox('Bir ürün seçin:', product_list)
     
     # Önerilecek ürün sayısı
     top_n_input = st.slider("Önerilecek ürün sayısını seçin", 1, 10, 5)
-    
+
+    # Kategori filtresi seçimi
+    all_categories = sorted(df['Category'].dropna().unique().tolist())
+    selected_category = st.selectbox('Kategori filtresi uygula (İsteğe bağlı):', ['Tüm Kategoriler'] + all_categories)
+
     # Tavsiye butonu
     if st.button("Tavsiyeleri Göster"):
-        recommendations, recommendation_scores, recommendation_categories = item_based_recommendation(product_name_input, top_n=top_n_input)
+        # Eğer 'Tüm Kategoriler' seçildiyse kategori filtresi uygulama
+        category_filter = None if selected_category == 'Tüm Kategoriler' else selected_category
+        
+        recommendations, recommendation_scores, recommendation_categories = item_based_recommendation(
+            product_name_input, 
+            selected_category=category_filter,
+            top_n=top_n_input
+        )
         
         if recommendations:
             st.success(f"**{product_name_input}** ürününü alanlar şunları da alabilir:")
@@ -101,4 +123,4 @@ if tabs == 'Ürün Tavsiyesi':
             st.pyplot(fig)
             
         else:
-            st.warning("Bu ürün için yeterli veri bulunamadı.")
+            st.warning("Bu ürün için seçilen kategoride tavsiye bulunamadı.")
