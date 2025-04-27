@@ -98,7 +98,7 @@ if tabs == 'Ürün Tavsiyesi':
             norm = plt.Normalize(recommendation_df['Tavsiye Oranı (%)'].min(), recommendation_df['Tavsiye Oranı (%)'].max())
             colors = plt.cm.Greens(norm(recommendation_df['Tavsiye Oranı (%)']))
 
-            fig, ax = plt.subplots(figsize=(7, 3))  # Daha küçük grafik
+            fig, ax = plt.subplots(figsize=(7, 3))
             bars = ax.barh(recommendation_df['Ürün Adı'], recommendation_df['Tavsiye Oranı (%)'],
                            color=colors, edgecolor='black')
             for bar in bars:
@@ -164,10 +164,11 @@ elif tabs == 'Genel Satış Analizi':
     st.subheader('Kategorilere Göre Satışlar')
     category_sales = filtered_df.groupby('Category')['Sales'].sum().sort_values(ascending=False)
 
-    fig2, ax2 = plt.subplots(figsize=(5, 2.5))  # Daha da küçük grafik
-    bars = ax2.bar(category_sales.index, category_sales.values, color=plt.cm.Greens(np.linspace(0.5, 1, len(category_sales))),
-                   edgecolor='black', width=0.5)  # Barlar birbirine yakın!
-    
+    fig2, ax2 = plt.subplots(figsize=(5, 2.2))  # Daha küçük grafik
+    bars = ax2.bar(category_sales.index, category_sales.values, 
+                   color=plt.cm.Greens(np.linspace(0.5, 1, len(category_sales))),
+                   edgecolor='black', width=0.4)  # width azaltıldı --> Barlar birbirine daha yakın
+
     ax2.set_ylabel('Toplam Satış ($)', fontsize=10)
     ax2.set_xlabel('Kategori', fontsize=10)
     ax2.set_title('Kategori Bazında Satışlar', fontsize=12, pad=10)
