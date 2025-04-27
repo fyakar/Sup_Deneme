@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 import streamlit as st
+import matplotlib.pyplot as plt
 
 # Veriyi yükleme
 file_path = 'CHURN HESAPLAMA.xlsx'  # Excel dosyasının yolu
@@ -17,10 +18,13 @@ interaction_matrix = df.pivot_table(index='Customer_ID', columns='Product_Name',
 cosine_sim = cosine_similarity(interaction_matrix.T)
 product_names = interaction_matrix.columns.tolist()
 
+# Ürün isimleri ve kategorileri eşleştir
+product_category_map = df[['Product_Name', 'Category']].drop_duplicates().set_index('Product_Name')['Category'].to_dict()
+
 # Tavsiye Fonksiyonu
 def item_based_recommendation(product_name, top_n=5):
     if product_name not in product_names:
-        return [], []
+        return [], [], []
     
     # Ürün adından index buluyoruz
     product_idx = product_names.index(product_name)
@@ -43,7 +47,10 @@ def item_based_recommendation(product_name, top_n=5):
     max_similarity = recommendation_scores.max() if recommendation_scores.max() != 0 else 1
     recommendation_percentages = (recommendation_scores / max_similarity) * 100
     
-    return recommended_products, recommendation_percentages
+    # Ürünlerin kategorilerini çekelim
+    recommended_categories = [product_category_map.get(prod, "Kategori Bilinmiyor") for prod in recommended_products]
+    
+    return recommended_products, recommendation_percentages, recommended_categories
 
 # Streamlit Başlangıç
 st.title("Superstore Ürün Tavsiye Sistemi")
@@ -70,11 +77,28 @@ if tabs == 'Ürün Tavsiyesi':
     
     # Tavsiye butonu
     if st.button("Tavsiyeleri Göster"):
-        recommendations, recommendation_scores = item_based_recommendation(product_name_input, top_n=top_n_input)
+        recommendations, recommendation_scores, recommendation_categories = item_based_recommendation(product_name_input, top_n=top_n_input)
         
         if recommendations:
-            st.write(f"**{product_name_input}** ürününü alanlar şunları da alabilir:")
-            for i, (product, score) in enumerate(zip(recommendations, recommendation_scores), 1):
-                st.write(f"{i}. {product} - Tavsiye Oranı: {score:.2f}%")
+            st.success(f"**{product_name_input}** ürününü alanlar şunları da alabilir:")
+
+            # DataFrame halinde tablo gösterelim
+            recommendation_df = pd.DataFrame({
+                'Ürün Adı': recommendations,
+                'Kategori': recommendation_categories,
+                'Tavsiye Oranı (%)': recommendation_scores.round(2)
+            })
+            
+            st.dataframe(recommendation_df)
+
+            # Bar chart ile görsel gösterelim
+            fig, ax = plt.subplots(figsize=(10, 6))
+            ax.barh(recommendation_df['Ürün Adı'], recommendation_df['Tavsiye Oranı (%)'])
+            ax.set_xlabel('Tavsiye Oranı (%)')
+            ax.set_ylabel('Ürünler')
+            ax.set_title('Tavsiye Edilen Ürünler ve Tavsiye Oranları')
+            ax.invert_yaxis()  # En yüksek oran yukarıda olsun
+            st.pyplot(fig)
+            
         else:
             st.warning("Bu ürün için yeterli veri bulunamadı.")
