@@ -84,13 +84,15 @@ if tabs == 'Ürün Tavsiyesi':
         
         if recommendations:
             recommendation_df = pd.DataFrame({
-                'No': list(range(1, len(recommendations)+1)),
                 'Ürün Adı': recommendations,
                 'Kategori': recommendation_categories,
                 'Tavsiye Oranı (%)': recommendation_scores.round(2)
             })
-            st.dataframe(recommendation_df)
 
+            # Indexleri gizleyerek tablo göster
+            st.dataframe(recommendation_df.reset_index(drop=True))
+
+            # Bar renkleri tavsiye oranına göre
             norm = plt.Normalize(recommendation_df['Tavsiye Oranı (%)'].min(), recommendation_df['Tavsiye Oranı (%)'].max())
             colors = plt.cm.Blues(norm(recommendation_df['Tavsiye Oranı (%)']))
 
@@ -131,7 +133,6 @@ elif tabs == 'Genel Satış Analizi':
         st.metric("Toplam Satış", f"${filtered_df['Sales'].sum():,.2f}")
     with col2:
         st.metric("Toplam Müşteri", filtered_df['Customer_ID'].nunique())
-    
 
     st.subheader('Kategorilere Göre Satışlar')
     category_sales = filtered_df.groupby('Category')['Sales'].sum().sort_values(ascending=False)
