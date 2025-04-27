@@ -13,13 +13,13 @@ if 'Type' not in df.columns:
     if 'Segment' in df.columns:
         df['Type'] = df['Segment'].apply(lambda x: 'B2B' if x in ['Corporate', 'Home Office'] else 'B2C')
 
-# Gerekli kolonları filtrele
+# Gerekli kolonları seç
 df = df[['Customer_ID', 'Product_Name', 'Sales', 'Category', 'Order_Date', 'Type']]
 
 # Order_Date kolonunu datetime yap
 df['Order_Date'] = pd.to_datetime(df['Order_Date'])
 
-# Ürün İsimleri ve Kategorileri Eşle
+# Ürün isimleri ve kategorileri eşle
 product_category_map = df[['Product_Name', 'Category']].drop_duplicates().set_index('Product_Name')['Category'].to_dict()
 
 # Kullanıcı-Ürün Etkileşim Matrisi
@@ -87,12 +87,13 @@ if tabs == 'Ürün Tavsiyesi':
         
         if recommendations:
             recommendation_df = pd.DataFrame({
+                'Sıra No': list(range(1, len(recommendations) + 1)),
                 'Ürün Adı': recommendations,
                 'Kategori': recommendation_categories,
                 'Tavsiye Oranı (%)': recommendation_scores.round(2)
             })
 
-            st.dataframe(recommendation_df.reset_index(drop=True))
+            st.dataframe(recommendation_df)
 
             norm = plt.Normalize(recommendation_df['Tavsiye Oranı (%)'].min(), recommendation_df['Tavsiye Oranı (%)'].max())
             colors = plt.cm.Blues(norm(recommendation_df['Tavsiye Oranı (%)']))
