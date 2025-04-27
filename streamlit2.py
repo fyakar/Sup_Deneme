@@ -61,7 +61,7 @@ def item_based_recommendation(product_name, selected_category=None, top_n=5):
 
 # Streamlit Başlangıç
 st.set_page_config(page_title="Superstore Dashboard", layout="wide")
-st.title("📈 Superstore Veri Analizi ve Ürün Tavsiye Dashboardu")
+st.title("📈 Superstore Ürün Tavsiye Sistemi")
 
 # Sidebar
 st.sidebar.image('logo.png', use_container_width=True)
