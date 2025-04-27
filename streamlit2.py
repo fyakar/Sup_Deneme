@@ -93,7 +93,7 @@ if tabs == 'Ürün Tavsiyesi':
                 'Tavsiye Oranı (%)': recommendation_scores.round(2)
             })
 
-            # INDEX GİZLENİYOR
+            # Index gizleniyor
             st.dataframe(recommendation_df.reset_index(drop=True))
 
             norm = plt.Normalize(recommendation_df['Tavsiye Oranı (%)'].min(), recommendation_df['Tavsiye Oranı (%)'].max())
@@ -127,18 +127,25 @@ elif tabs == 'Genel Satış Analizi':
     else:
         selected_type = 'Tüm Tipler'
 
-    # Tarih aralığı filtresi
-    min_date = df['Order_Date'].min()
-    max_date = df['Order_Date'].max()
+    # Tarih filtresi opsiyonel checkbox
+    date_filter_active = st.checkbox("Tarih filtresi uygula", value=False)
 
-    date_range = st.date_input(
-        label="Tarih Aralığı Seçin",
-        value=[min_date, max_date],
-        min_value=min_date,
-        max_value=max_date
-    )
+    if date_filter_active:
+        min_date = df['Order_Date'].min()
+        max_date = df['Order_Date'].max()
 
-    start_date, end_date = date_range
+        date_range = st.date_input(
+            label="Tarih Aralığı Seçin",
+            value=[min_date, max_date],
+            min_value=min_date,
+            max_value=max_date
+        )
+
+        start_date, end_date = date_range
+    else:
+        # Eğer tarih filtresi uygulanmıyorsa tüm veriyi kullan
+        start_date = df['Order_Date'].min()
+        end_date = df['Order_Date'].max()
 
     # Filtrelemeler
     filtered_df = df.copy()
