@@ -154,7 +154,6 @@ elif tabs == 'Genel Satış Analizi':
 
     st.metric("Toplam Satış", f"${total_sales:,.2f}")
     st.metric("Toplam Müşteri", total_customers)
-    st.metric("Toplam Ürün", total_products)
 
     # En çok satan kategoriler grafiği
     category_sales = filtered_df.groupby('Category')['Sales'].sum().sort_values(ascending=False)
