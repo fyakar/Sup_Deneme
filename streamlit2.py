@@ -50,7 +50,7 @@ def item_based_recommendation(product_name, selected_category=None, top_n=5):
         recommended_products, recommendation_scores = zip(*filtered)
     
     recommended_products = list(recommended_products)[:top_n]
-    recommendation_scores = np.array(recommendation_scores)[:top_n]
+    recommendation_scores = np.array(recommended_scores)[:top_n]
     
     max_similarity = recommendation_scores.max() if recommendation_scores.max() != 0 else 1
     recommendation_percentages = (recommendation_scores / max_similarity) * 100
@@ -93,7 +93,8 @@ if tabs == 'Ürün Tavsiyesi':
                 'Tavsiye Oranı (%)': recommendation_scores.round(2)
             })
 
-            st.dataframe(recommendation_df)
+            # Index olmadan gösteriyoruz
+            st.dataframe(recommendation_df.style.hide(axis="index"))
 
             norm = plt.Normalize(recommendation_df['Tavsiye Oranı (%)'].min(), recommendation_df['Tavsiye Oranı (%)'].max())
             colors = plt.cm.Blues(norm(recommendation_df['Tavsiye Oranı (%)']))
