@@ -97,17 +97,18 @@ if tabs == 'Ürün Tavsiyesi':
             st.dataframe(recommendation_df.reset_index(drop=True))
 
             norm = plt.Normalize(recommendation_df['Tavsiye Oranı (%)'].min(), recommendation_df['Tavsiye Oranı (%)'].max())
-            colors = plt.cm.Blues(norm(recommendation_df['Tavsiye Oranı (%)']))
+            colors = plt.cm.Greens(norm(recommendation_df['Tavsiye Oranı (%)']))  # Yeşil tonları
 
-            fig, ax = plt.subplots(figsize=(10, 6))
-            bars = ax.barh(recommendation_df['Ürün Adı'], recommendation_df['Tavsiye Oranı (%)'], color=colors, edgecolor='black')
+            fig, ax = plt.subplots(figsize=(8, 4))  # Daha küçük grafik
+            bars = ax.barh(recommendation_df['Ürün Adı'], recommendation_df['Tavsiye Oranı (%)'],
+                           color=colors, edgecolor='black')
             for bar in bars:
                 width = bar.get_width()
-                ax.text(width + 1, bar.get_y() + bar.get_height()/2, f'{width:.1f}%', va='center', fontsize=10, color='black')
+                ax.text(width + 1, bar.get_y() + bar.get_height()/2, f'{width:.1f}%', va='center', fontsize=9, color='black')
 
-            ax.set_xlabel('Tavsiye Oranı (%)', fontsize=12, fontweight='bold')
-            ax.set_ylabel('Ürünler', fontsize=12, fontweight='bold')
-            ax.set_title('Tavsiye Edilen Ürünler ve Tavsiye Oranları', fontsize=14, fontweight='bold', pad=20)
+            ax.set_xlabel('Tavsiye Oranı (%)', fontsize=11)
+            ax.set_ylabel('Ürünler', fontsize=11)
+            ax.set_title('Tavsiye Edilen Ürünler ve Tavsiye Oranları', fontsize=13, pad=15)
             ax.spines['top'].set_visible(False)
             ax.spines['right'].set_visible(False)
             ax.invert_yaxis()
@@ -143,7 +144,6 @@ elif tabs == 'Genel Satış Analizi':
 
         start_date, end_date = date_range
     else:
-        # Eğer tarih filtresi uygulanmıyorsa tüm veriyi kullan
         start_date = df['Order_Date'].min()
         end_date = df['Order_Date'].max()
 
@@ -165,9 +165,13 @@ elif tabs == 'Genel Satış Analizi':
     st.subheader('Kategorilere Göre Satışlar')
     category_sales = filtered_df.groupby('Category')['Sales'].sum().sort_values(ascending=False)
 
-    fig2, ax2 = plt.subplots(figsize=(8, 5))
-    category_sales.plot(kind='bar', ax=ax2, color='skyblue', edgecolor='black')
-    ax2.set_ylabel('Toplam Satış ($)')
-    ax2.set_title('Kategori Bazında Satışlar')
+    fig2, ax2 = plt.subplots(figsize=(7, 4))  # Daha küçük grafik
+    category_sales.plot(kind='bar', ax=ax2, color='lightgreen', edgecolor='black')
+    ax2.set_ylabel('Toplam Satış ($)', fontsize=11)
+    ax2.set_xlabel('Kategori', fontsize=11)
+    ax2.set_title('Kategori Bazında Satışlar', fontsize=13, pad=15)
+    plt.xticks(rotation=45)
+    ax2.spines['top'].set_visible(False)
+    ax2.spines['right'].set_visible(False)
     plt.tight_layout()
     st.pyplot(fig2)
