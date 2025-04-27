@@ -56,40 +56,6 @@ def item_based_recommendation(product_name, selected_category=None, top_n=5):
     
     return recommended_products, recommendation_percentages, recommended_categories
 
-# RFM Analizi Fonksiyonu
-def rfm_segmentation(df):
-    df['Order_Date'] = pd.to_datetime(df['Order_Date'])
-    reference_date = df['Order_Date'].max() + pd.Timedelta(days=1)
-    
-    rfm = df.groupby('Customer_ID').agg({
-        'Order_Date': lambda x: (reference_date - x.max()).days,
-        'Customer_ID': 'count',
-        'Sales': 'sum'
-    }).rename(columns={'Order_Date': 'Recency', 'Customer_ID': 'Frequency', 'Sales': 'Monetary'})
-    
-    # RFM skorları
-    rfm['R_Score'] = pd.qcut(rfm['Recency'], 5, labels=[5,4,3,2,1]).astype(int)
-    rfm['F_Score'] = pd.qcut(rfm['Frequency'].rank(method='first'), 5, labels=[1,2,3,4,5]).astype(int)
-    rfm['M_Score'] = pd.qcut(rfm['Monetary'], 5, labels=[1,2,3,4,5]).astype(int)
-    
-    rfm['RFM_Score'] = rfm['R_Score'].astype(str) + rfm['F_Score'].astype(str) + rfm['M_Score'].astype(str)
-
-    # Segment atama
-    def segment(x):
-        if x['R_Score'] >= 4 and x['F_Score'] >= 4 and x['M_Score'] >= 4:
-            return 'Champions'
-        elif x['F_Score'] >= 4:
-            return 'Loyal Customers'
-        elif x['R_Score'] <= 2 and x['F_Score'] <= 2:
-            return 'At Risk'
-        elif x['R_Score'] >= 4:
-            return 'New Customers'
-        else:
-            return 'Others'
-    
-    rfm['Segment'] = rfm.apply(segment, axis=1)
-    return rfm
-
 # Streamlit Başlangıç
 st.set_page_config(page_title="Superstore Dashboard", layout="wide")
 st.title("📈 Superstore Veri Analizi ve Ürün Tavsiye Dashboardu")
@@ -97,7 +63,7 @@ st.title("📈 Superstore Veri Analizi ve Ürün Tavsiye Dashboardu")
 # Sidebar
 st.sidebar.image('logo.png', use_container_width=True)
 st.sidebar.write("Datamigos - Data Analytics Team")
-tabs = st.sidebar.radio('Menü Seçin:', ['Ürün Tavsiyesi', 'Genel Satış Analizi', 'Müşteri Segment Analizi'])
+tabs = st.sidebar.radio('Menü Seçin:', ['Ürün Tavsiyesi', 'Genel Satış Analizi'])
 
 # Ürün Tavsiyesi Sayfası
 if tabs == 'Ürün Tavsiyesi':
@@ -160,13 +126,12 @@ elif tabs == 'Genel Satış Analizi':
     else:
         filtered_df = df.copy()
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2 = st.columns(2)
     with col1:
         st.metric("Toplam Satış", f"${filtered_df['Sales'].sum():,.2f}")
     with col2:
         st.metric("Toplam Müşteri", filtered_df['Customer_ID'].nunique())
-    with col3:
-        st.metric("Toplam Ürün", filtered_df['Product_Name'].nunique())
+    
 
     st.subheader('Kategorilere Göre Satışlar')
     category_sales = filtered_df.groupby('Category')['Sales'].sum().sort_values(ascending=False)
@@ -177,21 +142,3 @@ elif tabs == 'Genel Satış Analizi':
     ax2.set_title('Kategori Bazında Satışlar')
     plt.tight_layout()
     st.pyplot(fig2)
-
-# Müşteri Segment Analizi Sayfası
-elif tabs == 'Müşteri Segment Analizi':
-    st.header('🧩 Müşteri Segment Analizi')
-
-    rfm = rfm_segmentation(df)
-
-    st.dataframe(rfm[['Recency', 'Frequency', 'Monetary', 'Segment']])
-
-    st.subheader('Segment Dağılımı')
-    segment_counts = rfm['Segment'].value_counts()
-
-    fig3, ax3 = plt.subplots(figsize=(8, 5))
-    segment_counts.plot(kind='bar', ax=ax3, color='orange', edgecolor='black')
-    ax3.set_ylabel('Müşteri Sayısı')
-    ax3.set_title('Müşteri Segment Dağılımı')
-    plt.tight_layout()
-    st.pyplot(fig3)
