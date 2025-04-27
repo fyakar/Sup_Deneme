@@ -9,8 +9,13 @@ import matplotlib.colors as mcolors
 file_path = 'CHURN HESAPLAMA.xlsx'  # Excel dosyasının yolu
 df = pd.read_excel(file_path)
 
+# Eğer 'Type' kolonu yoksa, Segment'ten türetelim
+if 'Type' not in df.columns:
+    if 'Segment' in df.columns:
+        df['Type'] = df['Segment'].apply(lambda x: 'B2B' if x in ['Corporate', 'Home Office'] else 'B2C')
+
 # Öneri sistemi için gerekli sütunları seçiyoruz
-df = df[['Customer_ID', 'Product_Name', 'Sales', 'Category']]
+df = df[['Customer_ID', 'Product_Name', 'Sales', 'Category', 'Type']]
 
 # Kullanıcı-Ürün Etkileşim Matrisi oluşturuyoruz
 interaction_matrix = df.pivot_table(index='Customer_ID', columns='Product_Name', values='Sales', aggfunc='sum', fill_value=0)
@@ -54,11 +59,11 @@ def item_based_recommendation(product_name, selected_category=None, top_n=5):
     return recommended_products, recommendation_percentages, recommended_categories
 
 # Streamlit Başlangıç
-st.title("Superstore Ürün Tavsiye Sistemi")
+st.title("Superstore Ürün Tavsiye ve Satış Analizi Sistemi")
 
 # Sidebar
 st.sidebar.image('logo.png', use_container_width=True)
-st.sidebar.write("Datamigos Ürün Tavsiye Sistemi - Explore products you may like!")
+st.sidebar.write("Datamigos Ürün Tavsiye ve Analiz Sistemi - Explore products you may like!")
 
 # Sidebar - Sekmeler
 tabs = st.sidebar.radio('Sekmeler:', ['Ürün Tavsiyesi', 'Genel Satış Analizi'])
@@ -129,17 +134,30 @@ if tabs == 'Ürün Tavsiyesi':
 elif tabs == 'Genel Satış Analizi':
     st.subheader('Genel Satış Analizi')
 
-    # Basit bir özet gösterimi ekleyelim
-    total_sales = df['Sales'].sum()
-    total_customers = df['Customer_ID'].nunique()
-    total_products = df['Product_Name'].nunique()
+    # Type filtresi ekleyelim (isteğe bağlı)
+    if 'Type' in df.columns:
+        type_options = ['Tüm Tipler'] + sorted(df['Type'].dropna().unique().tolist())
+        selected_type = st.selectbox('Müşteri Tipi Seçin (Opsiyonel):', type_options)
+    else:
+        selected_type = 'Tüm Tipler'
+
+    # Type filtresine göre veriyi filtreleyelim
+    if selected_type != 'Tüm Tipler':
+        filtered_df = df[df['Type'] == selected_type]
+    else:
+        filtered_df = df.copy()
+
+    # Genel metrikler
+    total_sales = filtered_df['Sales'].sum()
+    total_customers = filtered_df['Customer_ID'].nunique()
+    total_products = filtered_df['Product_Name'].nunique()
 
     st.metric("Toplam Satış", f"${total_sales:,.2f}")
     st.metric("Toplam Müşteri", total_customers)
     st.metric("Toplam Ürün", total_products)
 
     # En çok satan kategoriler grafiği
-    category_sales = df.groupby('Category')['Sales'].sum().sort_values(ascending=False)
+    category_sales = filtered_df.groupby('Category')['Sales'].sum().sort_values(ascending=False)
 
     fig2, ax2 = plt.subplots(figsize=(8, 5))
     category_sales.plot(kind='bar', ax=ax2, color='skyblue', edgecolor='black')
