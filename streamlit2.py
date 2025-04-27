@@ -16,6 +16,9 @@ if 'Type' not in df.columns:
 # Gerekli kolonları filtrele
 df = df[['Customer_ID', 'Product_Name', 'Sales', 'Category', 'Order_Date', 'Type']]
 
+# Order_Date kolonunu datetime yap
+df['Order_Date'] = pd.to_datetime(df['Order_Date'])
+
 # Ürün İsimleri ve Kategorileri Eşle
 product_category_map = df[['Product_Name', 'Category']].drop_duplicates().set_index('Product_Name')['Category'].to_dict()
 
@@ -89,10 +92,8 @@ if tabs == 'Ürün Tavsiyesi':
                 'Tavsiye Oranı (%)': recommendation_scores.round(2)
             })
 
-            # Indexleri gizleyerek tablo göster
             st.dataframe(recommendation_df.reset_index(drop=True))
 
-            # Bar renkleri tavsiye oranına göre
             norm = plt.Normalize(recommendation_df['Tavsiye Oranı (%)'].min(), recommendation_df['Tavsiye Oranı (%)'].max())
             colors = plt.cm.Blues(norm(recommendation_df['Tavsiye Oranı (%)']))
 
@@ -117,17 +118,35 @@ if tabs == 'Ürün Tavsiyesi':
 elif tabs == 'Genel Satış Analizi':
     st.header('💰 Genel Satış Analizi')
 
+    # Type filtresi
     if 'Type' in df.columns:
         type_options = ['Tüm Tipler'] + sorted(df['Type'].dropna().unique().tolist())
         selected_type = st.selectbox('Müşteri Tipi (Opsiyonel):', type_options)
     else:
         selected_type = 'Tüm Tipler'
 
-    if selected_type != 'Tüm Tipler':
-        filtered_df = df[df['Type'] == selected_type]
-    else:
-        filtered_df = df.copy()
+    # Tarih aralığı filtresi
+    min_date = df['Order_Date'].min()
+    max_date = df['Order_Date'].max()
 
+    date_range = st.date_input(
+        label="Tarih Aralığı Seçin",
+        value=[min_date, max_date],
+        min_value=min_date,
+        max_value=max_date
+    )
+
+    start_date, end_date = date_range
+
+    # Filtrelemeler
+    filtered_df = df.copy()
+
+    if selected_type != 'Tüm Tipler':
+        filtered_df = filtered_df[filtered_df['Type'] == selected_type]
+
+    filtered_df = filtered_df[(filtered_df['Order_Date'] >= pd.to_datetime(start_date)) & (filtered_df['Order_Date'] <= pd.to_datetime(end_date))]
+
+    # Metrikler
     col1, col2 = st.columns(2)
     with col1:
         st.metric("Toplam Satış", f"${filtered_df['Sales'].sum():,.2f}")
