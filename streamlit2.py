@@ -61,7 +61,7 @@ def item_based_recommendation(product_name, selected_category=None, top_n=5):
 
 # Streamlit Başlangıç
 st.set_page_config(page_title="Superstore Dashboard", layout="wide")
-st.title("📈 Superstore Ürün Tavsiye Sistemi")
+st.title("📈 Superstore powered by Datamigos")
 
 # Sidebar
 st.sidebar.image('logo.png', use_container_width=True)
@@ -70,7 +70,7 @@ tabs = st.sidebar.radio('Menü Seçin:', ['Ürün Tavsiyesi', 'Genel Satış Ana
 
 # Ürün Tavsiyesi Sayfası
 if tabs == 'Ürün Tavsiyesi':
-    st.header('🎯 Ürün Tavsiyesi')
+    st.header('Ürün Tavsiyesi')
     
     product_list = sorted(df['Product_Name'].unique().tolist())
     product_name_input = st.selectbox('Bir ürün seçin:', product_list)
@@ -118,7 +118,7 @@ if tabs == 'Ürün Tavsiyesi':
 
 # Genel Satış Analizi Sayfası
 elif tabs == 'Genel Satış Analizi':
-    st.header('💰 Genel Satış Analizi')
+    st.header('Genel Satış Analizi')
 
     # Type filtresi
     if 'Type' in df.columns:
