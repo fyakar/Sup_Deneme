@@ -5,7 +5,7 @@ import streamlit as st
 import matplotlib.pyplot as plt
 
 # Veriyi yükleme
-file_path = 'CHURN HESAPLAMA.xlsx'  # Excel dosyasının yolu
+file_path = 'CHURN HESAPLAMA.xlsx'
 df = pd.read_excel(file_path)
 
 # Eğer 'Type' kolonu yoksa Segment'ten türetelim
@@ -93,22 +93,21 @@ if tabs == 'Ürün Tavsiyesi':
                 'Tavsiye Oranı (%)': recommendation_scores.round(2)
             })
 
-            # Index gizleniyor
             st.dataframe(recommendation_df.reset_index(drop=True))
 
             norm = plt.Normalize(recommendation_df['Tavsiye Oranı (%)'].min(), recommendation_df['Tavsiye Oranı (%)'].max())
-            colors = plt.cm.Greens(norm(recommendation_df['Tavsiye Oranı (%)']))  # Yeşil tonları
+            colors = plt.cm.Greens(norm(recommendation_df['Tavsiye Oranı (%)']))
 
-            fig, ax = plt.subplots(figsize=(8, 4))  # Daha küçük grafik
+            fig, ax = plt.subplots(figsize=(7, 3))  # Daha küçük grafik!
             bars = ax.barh(recommendation_df['Ürün Adı'], recommendation_df['Tavsiye Oranı (%)'],
                            color=colors, edgecolor='black')
             for bar in bars:
                 width = bar.get_width()
-                ax.text(width + 1, bar.get_y() + bar.get_height()/2, f'{width:.1f}%', va='center', fontsize=9, color='black')
+                ax.text(width + 1, bar.get_y() + bar.get_height()/2, f'{width:.1f}%', va='center', fontsize=8, color='black')
 
-            ax.set_xlabel('Tavsiye Oranı (%)', fontsize=11)
-            ax.set_ylabel('Ürünler', fontsize=11)
-            ax.set_title('Tavsiye Edilen Ürünler ve Tavsiye Oranları', fontsize=13, pad=15)
+            ax.set_xlabel('Tavsiye Oranı (%)', fontsize=10)
+            ax.set_ylabel('Ürünler', fontsize=10)
+            ax.set_title('Tavsiye Edilen Ürünler ve Tavsiye Oranları', fontsize=12, pad=10)
             ax.spines['top'].set_visible(False)
             ax.spines['right'].set_visible(False)
             ax.invert_yaxis()
@@ -165,11 +164,11 @@ elif tabs == 'Genel Satış Analizi':
     st.subheader('Kategorilere Göre Satışlar')
     category_sales = filtered_df.groupby('Category')['Sales'].sum().sort_values(ascending=False)
 
-    fig2, ax2 = plt.subplots(figsize=(7, 4))  # Daha küçük grafik
+    fig2, ax2 = plt.subplots(figsize=(6, 3))  # Daha küçük grafik!
     category_sales.plot(kind='bar', ax=ax2, color='lightgreen', edgecolor='black')
-    ax2.set_ylabel('Toplam Satış ($)', fontsize=11)
-    ax2.set_xlabel('Kategori', fontsize=11)
-    ax2.set_title('Kategori Bazında Satışlar', fontsize=13, pad=15)
+    ax2.set_ylabel('Toplam Satış ($)', fontsize=10)
+    ax2.set_xlabel('Kategori', fontsize=10)
+    ax2.set_title('Kategori Bazında Satışlar', fontsize=12, pad=10)
     plt.xticks(rotation=45)
     ax2.spines['top'].set_visible(False)
     ax2.spines['right'].set_visible(False)
