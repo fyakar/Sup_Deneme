@@ -3,6 +3,7 @@ import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 import streamlit as st
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 
 # Veriyi yükleme
 file_path = 'CHURN HESAPLAMA.xlsx'  # Excel dosyasının yolu
@@ -11,10 +12,10 @@ df = pd.read_excel(file_path)
 # Öneri sistemi için gerekli sütunları seçiyoruz
 df = df[['Customer_ID', 'Product_Name', 'Sales', 'Category']]
 
-# Kullanıcı-Ürün Etkileşim Matrisi oluşturuyoruz (ÜRÜN İSMİ KULLANARAK)
+# Kullanıcı-Ürün Etkileşim Matrisi oluşturuyoruz
 interaction_matrix = df.pivot_table(index='Customer_ID', columns='Product_Name', values='Sales', aggfunc='sum', fill_value=0)
 
-# Cosine Similarity ile ürünler arasındaki benzerlikleri hesaplıyoruz
+# Cosine Similarity hesaplama
 cosine_sim = cosine_similarity(interaction_matrix.T)
 product_names = interaction_matrix.columns.tolist()
 
@@ -26,7 +27,6 @@ def item_based_recommendation(product_name, selected_category=None, top_n=5):
     if product_name not in product_names:
         return [], [], []
     
-    # Ürün adından index buluyoruz
     product_idx = product_names.index(product_name)
     similarity_scores = cosine_sim[product_idx]
     
@@ -59,7 +59,9 @@ st.title("Superstore Ürün Tavsiye Sistemi")
 # Sidebar
 st.sidebar.image('logo.png', use_container_width=True)
 st.sidebar.write("Datamigos Ürün Tavsiye Sistemi - Explore products you may like!")
-tabs = st.sidebar.radio('Sekmeler:', ['Ürün Tavsiyesi'])
+
+# Sidebar - Sekmeler
+tabs = st.sidebar.radio('Sekmeler:', ['Ürün Tavsiyesi', 'Genel Satış Analizi'])
 
 if tabs == 'Ürün Tavsiyesi':
     st.subheader('Ürün Tavsiyesi')
@@ -84,6 +86,7 @@ if tabs == 'Ürün Tavsiyesi':
 
             # Tavsiye edilen ürünleri tablo olarak gösterelim
             recommendation_df = pd.DataFrame({
+                'No': list(range(1, len(recommendations)+1)),  # 1'den başlatarak numaralandır
                 'Ürün Adı': recommendations,
                 'Kategori': recommendation_categories,
                 'Tavsiye Oranı (%)': recommendation_scores.round(2)
@@ -91,10 +94,14 @@ if tabs == 'Ürün Tavsiyesi':
             
             st.dataframe(recommendation_df)
 
+            # Renk skalası oluştur (yüksek oran koyu renk olacak)
+            norm = plt.Normalize(recommendation_df['Tavsiye Oranı (%)'].min(), recommendation_df['Tavsiye Oranı (%)'].max())
+            colors = plt.cm.Blues(norm(recommendation_df['Tavsiye Oranı (%)']))
+
             # Geliştirilmiş bar chart
             fig, ax = plt.subplots(figsize=(10, 6))
             bars = ax.barh(recommendation_df['Ürün Adı'], recommendation_df['Tavsiye Oranı (%)'], 
-                           color='#4e79a7', edgecolor='black')
+                           color=colors, edgecolor='black')
 
             # Barların üstüne değerleri yazalım
             for bar in bars:
@@ -113,9 +120,30 @@ if tabs == 'Ürün Tavsiyesi':
             # Y ekseni ters çevir (en yüksek oran üstte olsun)
             ax.invert_yaxis()
 
-            # Daha sıkı layout
             plt.tight_layout()
             st.pyplot(fig)
             
         else:
             st.warning("Bu ürün için seçilen kategoride tavsiye bulunamadı.")
+
+elif tabs == 'Genel Satış Analizi':
+    st.subheader('Genel Satış Analizi')
+
+    # Basit bir özet gösterimi ekleyelim
+    total_sales = df['Sales'].sum()
+    total_customers = df['Customer_ID'].nunique()
+    total_products = df['Product_Name'].nunique()
+
+    st.metric("Toplam Satış", f"${total_sales:,.2f}")
+    st.metric("Toplam Müşteri", total_customers)
+    st.metric("Toplam Ürün", total_products)
+
+    # En çok satan kategoriler grafiği
+    category_sales = df.groupby('Category')['Sales'].sum().sort_values(ascending=False)
+
+    fig2, ax2 = plt.subplots(figsize=(8, 5))
+    category_sales.plot(kind='bar', ax=ax2, color='skyblue', edgecolor='black')
+    ax2.set_ylabel('Toplam Satış ($)')
+    ax2.set_title('Kategorilere Göre Satışlar')
+    plt.tight_layout()
+    st.pyplot(fig2)
